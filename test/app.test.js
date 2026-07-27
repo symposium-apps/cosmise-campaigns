@@ -11,8 +11,7 @@ const { ReportStore } = require('../lib/store');
 const { CampaignClient, READ_NAMES, WRITE_NAMES, activityDetail } = require('../lib/campaign-client');
 const { renderMarkdown, validateReport } = require('../lib/markdown');
 const { TOOLS, createMcp } = require('../lib/mcp');
-const { selectModels } = require('../lib/report-builder');
-const { dateRangeFromQuestion } = require('../lib/report-builder');
+const { buildReport, dateRangeFromQuestion, selectModels } = require('../lib/report-builder');
 const { workflowTemplate } = require('../lib/workflow-runner');
 const { createApp } = require('../server');
 
@@ -222,6 +221,21 @@ test('mapping candidate diagnostics keep a report usable when aggregate coverage
   assert.equal(result.status, null);
   assert.equal(result.candidates.data.status_counts.proposable, 2);
   assert.deepEqual(result.limitations, ['Aggregate mapping coverage was unavailable; the exact-candidate preview was used instead.']);
+});
+
+test('an empty authorized campaign scope produces a truthful report without an invalid chart', () => {
+  const models = [{ key: 'last_click_client', label: 'Last click' }, { key: 'first_click_client', label: 'First click' }];
+  const results = Object.fromEntries(models.map((model) => [model.key, { data: { rows: [], totals: { spend: 0, revenue: 0, orders: 0, roas: 0 } } }]));
+  const built = buildReport({
+    question: 'Review April campaign performance.',
+    range: { start_date: '2026-04-01', end_date: '2026-04-30', label: 'April 2026' },
+    contextRead: { data: { scope: { org_name: 'Example account' } } },
+    sourceRead: {}, capabilityRead: {}, models, results, mappingRead: {}, diagnosticsRead: {}, trendRead: {}
+  });
+  assert.equal(built.summary.noData, true);
+  assert.doesNotMatch(built.markdown, /```campaign-chart/);
+  assert.equal(validateReport(built.markdown).ok, true);
+  assert.equal((built.markdown.match(/^\d+\. \*\*/gm) || []).length, 3);
 });
 
 test('workflow contract persists safe stage progress and date parsing is deterministic', () => {
