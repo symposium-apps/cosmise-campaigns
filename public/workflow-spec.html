@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#edf2ef">
+  <title>Campaign Report Build Preview</title>
+  <link rel="icon" href="/campaign-reports-icon.png" type="image/png">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/workflow.css?v=2.1.0">
+  <link rel="stylesheet" href="/workflow-polish.css?v=1.0.1">
+</head>
+<body class="workflow-demo-page">
+  <header class="workflow-demo-header">
+    <div class="workflow-demo-brand"><img src="/campaign-reports-icon.png" alt=""><div><strong>Campaign Reports</strong><span>Build experience preview</span></div></div>
+    <a class="workflow-demo-back" href="/">Back to reports</a>
+  </header>
+  <main class="workflow-demo-main">
+    <section class="workflow-demo-intro">
+      <div><p>What users see while a report is building</p><h1>Real campaign work, visible as it happens.</h1></div>
+      <div class="workflow-demo-copy">This interactive preview uses sample states. In the real app, every transition and progress count comes from an actual read-only Campaigns operation.</div>
+    </section>
+    <section class="workflow-demo-frame" aria-label="Interactive campaign report build preview">
+      <div class="workflow-demo-chrome"><div><i></i><i></i><i></i></div><span>Maiden Home · April campaign performance</span></div>
+      <div class="workflow-demo-stage"><section id="workflow-preview" class="workflow-shell" aria-live="polite"></section></div>
+      <div class="workflow-demo-controls">
+        <div class="workflow-demo-buttons" role="group" aria-label="Preview controls">
+          <button type="button" data-action="play" class="active">Replay build</button>
+          <button type="button" data-action="next">Next real event</button>
+          <button type="button" data-action="ready">Show ready</button>
+          <button type="button" data-action="failed">Show failure</button>
+        </div>
+        <div id="demo-status" class="workflow-demo-status"><strong>Auto-playing</strong> sample build states</div>
+      </div>
+    </section>
+  </main>
+  <script src="/workflow.js?v=2.0.4" defer></script>
+  <script src="/workflow-spec.js?v=2.0.0" defer></script>
+</body>
+</html>

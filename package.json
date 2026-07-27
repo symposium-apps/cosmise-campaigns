@@ -1,0 +1,24 @@
+{
+  "name": "cosmise-campaigns",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Read-only agent-facing Campaign Reports workspace for Symposium.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/symposium-apps/cosmise-campaigns.git"
+  },
+  "homepage": "https://github.com/symposium-apps/cosmise-campaigns#readme",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js",
+    "check": "npm test"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "marked": "12.0.2",
+    "sanitize-html": "2.13.1"
+  }
+}

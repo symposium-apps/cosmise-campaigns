@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7f5">
+  <title>Cosmise Campaign Reports</title>
+  <link rel="icon" href="/campaign-reports-icon.png" type="image/png">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/workflow.css?v=2.1.0">
+  <link rel="stylesheet" href="/workflow-polish.css?v=1.0.1">
+  <link rel="stylesheet" href="/responsive.css?v=1.0.0">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><img src="/campaign-reports-icon.png" alt=""><div><strong>Campaign Reports</strong><span>Read-only analysis</span></div></div>
+      <form id="question-form" class="question-form">
+        <label for="question">Ask a campaign question</label>
+        <textarea id="question" maxlength="1000" placeholder="Which campaigns changed most between attribution models?"></textarea>
+        <button type="submit">Start report</button>
+      </form>
+      <div class="rail-heading"><span>Reports</span><span id="report-count">0</span></div>
+      <nav id="reports" aria-label="Campaign reports"></nav>
+      <a class="workflow-spec-link" href="/workflow-spec.html">Watch the build demo</a>
+      <div id="connection" class="connection"></div>
+    </aside>
+    <main class="workspace">
+      <header class="toolbar">
+        <div><div id="report-title" class="report-title">Campaign Reports</div><div id="report-meta" class="report-meta">Ask a question to begin.</div></div>
+        <div class="toolbar-actions"><button id="copy" class="secondary" hidden>Copy Markdown</button><button id="download" class="secondary" hidden>Download</button><button id="share" class="secondary" hidden>Share</button></div>
+      </header>
+      <section id="workflow" class="workflow-shell" aria-live="polite" aria-label="Live report workflow" hidden></section>
+      <details id="activity-details" class="activity-details" hidden><summary>API activity details</summary><section id="activity" class="activity" aria-live="polite" aria-label="Local API activity" hidden></section></details>
+      <section id="content" class="content"><div class="empty"><img src="/campaign-reports-icon.png" alt=""><h1>Campaign answers, written clearly.</h1><p>Ask through Symposium or start a report here. The agent reads private campaign data and writes an evidence-backed Markdown report.</p></div></section>
+    </main>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+  <script src="/chart.js" defer></script>
+  <script src="/workflow.js?v=2.0.4" defer></script>
+  <script src="/app.js?v=2.1.0" defer></script>
+</body>
+</html>

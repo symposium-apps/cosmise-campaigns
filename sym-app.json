@@ -1,0 +1,51 @@
+{
+  "$schema": "https://sympo.si/schemas/sym-app-v1.json",
+  "schema_version": 1,
+  "id": "cosmise-campaigns",
+  "name": "Cosmise Campaign Reports",
+  "description": "Ask campaign questions and receive verified read-only Markdown reports.",
+  "runtime": {
+    "type": "node",
+    "health_path": "/_sym/health",
+    "startup_timeout_seconds": 30,
+    "shutdown_timeout_seconds": 10
+  },
+  "configuration": {
+    "environment": [{ "name": "COSMISE_MCP_URL", "default": "https://cosmise.com/api/mcp" }],
+    "secrets": [{
+      "name": "COSMISE_MCP_TOKEN",
+      "required": false,
+      "description": "Backend-only, organisation-scoped Cosmise credential. The app enforces a fixed read-only Campaigns operation allowlist."
+    }]
+  },
+  "integrations": [{
+    "id": "cosmise",
+    "required": true,
+    "reason": "Permit the trusted backend to make organisation-scoped, read-only Campaigns queries."
+  }],
+  "agent": {
+    "instructions_path": "AGENTS.md",
+    "bootstrap_path": "/api/agent/bootstrap",
+    "mcp_path": "/mcp"
+  },
+  "permissions": [{ "id": "network.external", "reason": "Call the read-only Cosmise Campaigns API from the trusted backend." }],
+  "data": {
+    "persistent_paths": [".sym-data"],
+    "user_data": { "enabled": true, "label": "Campaign reports", "quota_mb": 256, "content_types": ["text/markdown", "application/json", "image/svg+xml"] },
+    "private_state": true,
+    "cache": false
+  },
+  "marketplace": {
+    "subtitle": "Campaign Reports",
+    "category": "analytics",
+    "icon": "assets/icon.png",
+    "screenshots": [
+      "assets/screenshots/report-build.png",
+      "assets/screenshots/report-ready.png"
+    ],
+    "accent_color": "#3D45D8"
+  },
+  "handle": {
+    "suggested": "cosmise-campaigns"
+  }
+}
