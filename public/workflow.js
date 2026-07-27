@@ -65,7 +65,7 @@
     const failed = status === 'failed';
     const queued = status === 'queued';
     const headline = ready ? 'Your campaign report is ready' : failed ? 'The report build needs attention' : queued ? 'Queued for analysis' : current.label || 'Building your campaign report';
-    const detail = ready ? 'The evidence-backed report passed validation and is ready to review.' : failed ? workflow.summary || current.detail || 'The analysis stopped before the report was completed.' : queued ? workflow.summary || 'The read-only workflow will begin shortly.' : current.detail || workflow.summary || current.caption || 'Reading campaign evidence.';
+    const detail = ready ? 'Your report passed its final review and is ready.' : failed ? workflow.summary || current.detail || 'Your Agent stopped before the report was completed.' : queued ? workflow.summary || 'Your report will begin shortly.' : current.detail || workflow.summary || current.caption || 'Reviewing your campaign information.';
     const pill = ready ? 'Report ready' : failed ? 'Build failed' : queued ? 'Waiting to start' : stageProgress === null ? 'Analyzing now' : `${current.progress.completed} of ${current.progress.total} complete`;
     const eyebrow = options.preview ? 'Interactive design preview' : 'Live campaign analysis';
     const signature = JSON.stringify({
@@ -99,7 +99,7 @@
       <div class="build-shimmer" aria-hidden="true"></div>
       <div class="build-card-layer">
         <article class="build-card">
-          <div class="build-mark"><img src="/campaign-reports-icon.png" alt=""><span aria-hidden="true"></span></div>
+          <div class="build-mark"><img src="/assets/cosmise-mascot.png" alt="Cosmise"><span aria-hidden="true"></span></div>
           <p class="build-eyebrow"></p>
           <h2></h2>
           <p class="build-detail"></p>

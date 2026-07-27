@@ -189,12 +189,19 @@ test('managed runtime honors worker-provided HOST and PORT', async (t) => {
 test('workflow UI is event-driven, animated, responsive, reduced-motion safe, and shares its spec renderer', () => {
   const script = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
   const workflowScript = fs.readFileSync(path.join(__dirname, '..', 'public', 'workflow.js'), 'utf8');
+  const appStyles = fs.readFileSync(path.join(__dirname, '..', 'public', 'styles.css'), 'utf8');
+  const homeStyles = fs.readFileSync(path.join(__dirname, '..', 'public', 'home.css'), 'utf8');
   const styles = fs.readFileSync(path.join(__dirname, '..', 'public', 'workflow.css'), 'utf8');
   const polish = fs.readFileSync(path.join(__dirname, '..', 'public', 'workflow-polish.css'), 'utf8');
   const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
   const spec = fs.readFileSync(path.join(__dirname, '..', 'public', 'workflow-spec.html'), 'utf8');
   assert.match(script, /new EventSource\('\/api\/events\/stream'\)/);
-  assert.doesNotMatch(`${html}\n${script}`, /API activity|Browser-safe local API calls|revision \$\{/);
+  assert.doesNotMatch(`${html}\n${script}\n${workflowScript}`, /API activity|Browser-safe local API calls|local API|read-only workflow|evidence-backed|revision \$\{/i);
+  assert.match(appStyles, /--canvas:#fcfcfb;--card:#fff;--sunken:#f6f7f8/);
+  assert.match(appStyles, /--accent:#3d45d8/);
+  assert.match(appStyles, /background:#131316;color:#e6e6ea/);
+  assert.match(appStyles, /Hanken Grotesk/);
+  assert.match(homeStyles, /\.welcome-mark\{width:96px;height:96px/);
   assert.match(workflowScript, /workflow\.stages/);
   assert.match(styles, /@keyframes wf-spin/);
   assert.match(styles, /prefers-reduced-motion:reduce/);
@@ -203,12 +210,13 @@ test('workflow UI is event-driven, animated, responsive, reduced-motion safe, an
   assert.match(polish, /height:400px;min-height:400px;max-height:400px;overflow:hidden/);
   assert.doesNotMatch(polish, /\.build-card\{[^}]*overflow:(auto|scroll)/);
   assert.match(workflowScript, /slice\(0, 3\)/);
-  assert.match(workflowScript, /campaign-reports-icon\.png/);
+  assert.match(workflowScript, /assets\/cosmise-mascot\.png/);
   assert.match(html, /aria-live="polite"/);
   assert.match(html, /Ask your Agent to create a campaign report/);
   assert.match(html, /New reports appear here the moment your Agent starts working/);
   assert.match(html, /Need help with this report\?/);
   assert.match(html, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed\./);
+  assert.match(html, /assets\/cosmise-mascot\.png/);
   assert.match(script, /renderAgentHelp/);
   assert.doesNotMatch(html, /question-form|Start report|Generate standard report/);
   assert.match(spec, /What users see while a report is building/);
@@ -230,7 +238,7 @@ test('Campaign Reports icon is used across marketplace and browser identity surf
     'marketplace and browser artwork must remain byte-identical'
   );
   assert.match(index, /campaign-reports-icon\.png/);
-  assert.match(preview, /campaign-reports-icon\.png/);
+  assert.match(preview, /assets\/cosmise-mascot\.png/);
   assert.doesNotMatch(`${index}\n${preview}\n${JSON.stringify(manifest)}`, /icon\.svg/);
 });
 
