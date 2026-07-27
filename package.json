@@ -1,6 +1,6 @@
 {
   "name": "cosmise-campaigns",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Read-only agent-facing Campaign Reports workspace for Symposium.",
   "repository": {

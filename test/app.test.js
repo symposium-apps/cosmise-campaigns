@@ -203,6 +203,27 @@ test('available-model questions select the full manifest while ordinary reports 
   assert.equal(selectModels(capabilityRead, 'Give me a campaign report').length, 6);
 });
 
+test('mapping candidate diagnostics keep a report usable when aggregate coverage is unavailable', async () => {
+  const store = temporaryStore();
+  const report = store.createReport({ question: 'Review campaign performance.' });
+  const client = {
+    read: async (operation) => {
+      if (operation === 'mapping_health') throw new Error('Missing combos[]');
+      if (operation === 'mapping_candidates') return { operation, data: { status_counts: { proposable: 2 } } };
+      throw new Error(`Unexpected operation: ${operation}`);
+    }
+  };
+  const mcp = createMcp({ store, client, baseUrl: 'http://127.0.0.1' });
+  const result = await mcp.call('campaign_reports_read_mapping_health', {
+    report_id: report.id,
+    query: { start_date: '2026-04-01', end_date: '2026-04-30' },
+    include_candidates: true
+  });
+  assert.equal(result.status, null);
+  assert.equal(result.candidates.data.status_counts.proposable, 2);
+  assert.deepEqual(result.limitations, ['Aggregate mapping coverage was unavailable; the exact-candidate preview was used instead.']);
+});
+
 test('workflow contract persists safe stage progress and date parsing is deterministic', () => {
   const store = temporaryStore();
   const report = store.createReport({ question: 'Review April 2026 campaign performance' });
@@ -212,5 +233,6 @@ test('workflow contract persists safe stage progress and date parsing is determi
   assert.equal(workflow.current_stage, 'performance');
   assert.deepEqual(workflow.stages.find((stage) => stage.id === 'performance').progress, { completed: 4, total: 6 });
   assert.deepEqual(dateRangeFromQuestion('Which campaigns won in April 2026?'), { start_date: '2026-04-01', end_date: '2026-04-30', label: 'April 2026' });
+  assert.deepEqual(dateRangeFromQuestion('Analyze April 1 through April 30, 2026.'), { start_date: '2026-04-01', end_date: '2026-04-30', label: 'Apr 1, 2026 to Apr 30, 2026' });
   assert.doesNotMatch(JSON.stringify(workflow), /authorization|bearer|csk_/i);
 });
