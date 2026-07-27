@@ -198,7 +198,7 @@ test('workflow UI is event-driven, animated, responsive, reduced-motion safe, an
   assert.match(script, /new EventSource\('\/api\/events\/stream'\)/);
   assert.match(script, /derivedWorkflow\(metadata,rawActivities\)/);
   assert.match(script, /Working now/);
-  assert.match(script, /Date\.now\(\)-latestAt>120000/);
+  assert.match(script, /Date\.now\(\)-latestAt>180000/);
   assert.doesNotMatch(`${html}\n${script}\n${workflowScript}`, /API activity|Browser-safe local API calls|local API|read-only workflow|evidence-backed|revision \$\{/i);
   assert.match(appStyles, /--canvas:#fcfcfb;--card:#fff;--sunken:#f6f7f8/);
   assert.match(appStyles, /--accent:#3d45d8/);
@@ -221,6 +221,9 @@ test('workflow UI is event-driven, animated, responsive, reduced-motion safe, an
   assert.match(html, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed\./);
   assert.match(html, /assets\/cosmise-mascot\.png/);
   assert.match(script, /renderAgentHelp/);
+  assert.match(script, /queued:'Preparing'/);
+  assert.match(script, /body\.report\.status!==['"]ready['"]/);
+  assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '..', 'lib', 'store.js'), 'utf8'), /Report preparation has started/);
   assert.doesNotMatch(html, /question-form|Start report|Generate standard report/);
   assert.match(spec, /What users see while a report is building/);
   assert.match(spec, /workflow\.js/);

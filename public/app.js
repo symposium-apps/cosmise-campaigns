@@ -2,7 +2,7 @@
   const ui = { state: null, report: null };
   const $ = (selector) => document.querySelector(selector);
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[char]));
-  const statusLabel = (value) => ({ queued:'Waiting', writing:'Working', reviewing:'Reviewing', ready:'Ready', failed:'Failed' }[value] || value || 'Draft');
+  const statusLabel = (value) => ({ queued:'Preparing', writing:'Preparing', reviewing:'Final review', ready:'Ready', failed:'Needs help' }[value] || value || 'Draft');
   const updatedLabel = (value) => `Updated ${new Date(value).toLocaleString([], { dateStyle:'medium', timeStyle:'short' })}`;
   const BUILD_STAGES = [
     ['scope','Checking your campaign account'],
@@ -87,7 +87,7 @@
     const metadata=activeMetadata();
     const latest=(ui.state?.activities||[]).find((item)=>item.report_id===metadata?.id);
     const latestAt=Date.parse(latest?.updated_at||metadata?.updated_at||0);
-    const stalled=metadata?.status==='queued'&&!metadata?.workflow&&Date.now()-latestAt>120000;
+    const stalled=metadata?.status==='queued'&&!metadata?.workflow&&Date.now()-latestAt>180000;
     const needsHelp=stalled||metadata?.status==='failed'||metadata?.workflow?.status==='failed';
     $('#agent-help').hidden=!needsHelp;
   }
@@ -111,7 +111,7 @@
     $('#report-meta').textContent=`${statusLabel(body.report.status)} · ${updatedLabel(body.report.updated_at)}`;
     $('#content').innerHTML=`<article class="markdown-body">${body.rendered_html}</article>`;
     window.renderCampaignCharts?.($('#content'));
-    ['copy','download'].forEach((buttonId)=>$(`#${buttonId}`).hidden=false);
+    ['copy','download'].forEach((buttonId)=>$(`#${buttonId}`).hidden=body.report.status!=='ready');
     renderWorkflow();
   }
 
