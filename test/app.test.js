@@ -196,6 +196,9 @@ test('workflow UI is event-driven, animated, responsive, reduced-motion safe, an
   const html = fs.readFileSync(path.join(__dirname, '..', 'public', 'index.html'), 'utf8');
   const spec = fs.readFileSync(path.join(__dirname, '..', 'public', 'workflow-spec.html'), 'utf8');
   assert.match(script, /new EventSource\('\/api\/events\/stream'\)/);
+  assert.match(script, /derivedWorkflow\(metadata,rawActivities\)/);
+  assert.match(script, /Working now/);
+  assert.match(script, /Date\.now\(\)-latestAt>120000/);
   assert.doesNotMatch(`${html}\n${script}\n${workflowScript}`, /API activity|Browser-safe local API calls|local API|read-only workflow|evidence-backed|revision \$\{/i);
   assert.match(appStyles, /--canvas:#fcfcfb;--card:#fff;--sunken:#f6f7f8/);
   assert.match(appStyles, /--accent:#3d45d8/);

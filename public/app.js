@@ -4,6 +4,19 @@
   const escape = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[char]));
   const statusLabel = (value) => ({ queued:'Waiting', writing:'Working', reviewing:'Reviewing', ready:'Ready', failed:'Failed' }[value] || value || 'Draft');
   const updatedLabel = (value) => `Updated ${new Date(value).toLocaleString([], { dateStyle:'medium', timeStyle:'short' })}`;
+  const BUILD_STAGES = [
+    ['scope','Checking your campaign account'],
+    ['models','Getting attribution options'],
+    ['performance','Reviewing campaign performance'],
+    ['trend','Looking for changes over time'],
+    ['mapping','Checking campaign matching'],
+    ['diagnostics','Reviewing data quality'],
+    ['writing','Writing your report'],
+    ['validation','Completing the final review'],
+    ['complete','Report ready']
+  ];
+  const OPERATION_STAGE = { report_prepare:'scope', context:'scope', sources:'scope', capabilities:'models', performance:'performance', compare_attribution:'performance', trend:'trend', mapping:'mapping', diagnostics:'diagnostics', evidence:'performance', journey:'performance', report_write:'writing', report_validate:'validation', report_complete:'complete', report_fail:'complete' };
+  const OPERATION_COPY = { report_prepare:'Preparing your report', context:'Checking campaign access', sources:'Checking campaign sources', capabilities:'Getting attribution options', performance:'Reviewing campaign performance', compare_attribution:'Comparing attribution results', trend:'Looking for changes over time', mapping:'Checking campaign matching', diagnostics:'Reviewing data quality', evidence:'Investigating campaign evidence', journey:'Reviewing customer journeys', report_write:'Writing your report', report_validate:'Completing the final review', report_complete:'Report ready', report_fail:'Report needs attention' };
   function toast(message) { const node=$('#toast'); node.textContent=message; node.hidden=false; clearTimeout(ui.toast); ui.toast=setTimeout(()=>node.hidden=true,3500); }
   async function request(url, options) { const response=await fetch(url,options); const body=await response.json().catch(()=>({})); if(!response.ok) throw new Error(body.error||'Request failed'); return body; }
 
@@ -52,16 +65,29 @@
 
   function renderWorkflow() {
     const metadata=activeMetadata();
-    const workflow=metadata?.workflow||null;
-    const activities=(ui.state?.activities||[]).filter((item)=>item.report_id===metadata?.id).slice(0,4);
+    const rawActivities=(ui.state?.activities||[]).filter((item)=>item.report_id===metadata?.id).slice(0,4);
+    const workflow=metadata?.workflow||derivedWorkflow(metadata,rawActivities);
+    const activities=rawActivities.map((item,index)=>({ ...item, status:index===0&&workflow?.status==='running'?'running':item.status, title:OPERATION_COPY[item.operation]||item.title||'Working on your report', detail:index===0&&workflow?.status==='running'?'Working now':item.status==='failed'?'Needs attention':'Complete' }));
     const building=['queued','running','failed'].includes(workflow?.status);
     document.body.classList.toggle('workflow-is-building',building);
     window.WorkflowUI?.render($('#workflow'),workflow,{activities});
   }
 
+  function derivedWorkflow(metadata,activities) {
+    if(!metadata||metadata.status==='ready')return null;
+    const failed=metadata.status==='failed';
+    const latest=activities[0];
+    const currentId=OPERATION_STAGE[latest?.operation]||'scope';
+    const currentIndex=Math.max(0,BUILD_STAGES.findIndex(([id])=>id===currentId));
+    const stages=BUILD_STAGES.map(([id,label],index)=>({ id,label,status:failed&&index===currentIndex?'failed':index<currentIndex?'success':index===currentIndex?'running':'pending',detail:index===currentIndex?(OPERATION_COPY[latest?.operation]||'Working on your report'):'',progress:null }));
+    return { status:failed?'failed':'running', current_stage:currentId, percent:Math.max(8,Math.round(((currentIndex+.25)/BUILD_STAGES.length)*100)), summary:failed?'Your report needs attention':OPERATION_COPY[latest?.operation]||'Your Agent is preparing the report', stages };
+  }
+
   function renderAgentHelp() {
     const metadata=activeMetadata();
-    const stalled=metadata?.status==='queued'&&!metadata?.workflow;
+    const latest=(ui.state?.activities||[]).find((item)=>item.report_id===metadata?.id);
+    const latestAt=Date.parse(latest?.updated_at||metadata?.updated_at||0);
+    const stalled=metadata?.status==='queued'&&!metadata?.workflow&&Date.now()-latestAt>120000;
     const needsHelp=stalled||metadata?.status==='failed'||metadata?.workflow?.status==='failed';
     $('#agent-help').hidden=!needsHelp;
   }
