@@ -111,6 +111,7 @@ test('HTTP app supports question intake and browser-safe report rendering', asyn
   const home = await fetch(base);
   assert.equal(home.headers.get('content-security-policy'), null, 'Symposium must be able to embed the app');
   assert.equal(home.headers.get('x-frame-options'), null, 'the app must not emit an anti-iframe header');
+  assert.equal(home.headers.get('cache-control'), 'no-store', 'the iframe document must not retain stale framing headers');
   const healthResponse = await fetch(`${base}/_sym/health`);
   assert.equal(healthResponse.headers.get('content-security-policy'), null);
   assert.equal(healthResponse.headers.get('x-frame-options'), null);

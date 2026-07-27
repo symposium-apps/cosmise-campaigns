@@ -84,7 +84,13 @@ function createApp({ store, client, baseUrl = '', autoRun = true, runner = null 
     if (!report) return res.status(404).send('<!doctype html><title>Report unavailable</title><p>This report is unavailable or expired.</p>');
     res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(report.title)}</title><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/responsive.css?v=1.0.0"></head><body class="share-page"><main class="shared-report"><div class="share-mark">Campaign Report</div><article class="markdown-body">${renderMarkdown(report.markdown)}</article><footer>Snapshot generated ${escapeHtml(report.updated_at)}</footer></main><script src="/chart.js" defer></script></body></html>`);
   });
-  app.use(express.static(path.join(__dirname, 'public'), { index: 'index.html', etag: true, maxAge: '1h' }));
+  app.get('/', (_req, res) => {
+    // The document's response headers control whether Symposium may frame it.
+    // Never let a browser retain an older anti-iframe policy after an update.
+    res.setHeader('Cache-Control', 'no-store');
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  });
+  app.use(express.static(path.join(__dirname, 'public'), { index: false, etag: true, maxAge: '1h' }));
   if (autoRun) queueMicrotask(() => workflowRunner.recover());
   return { app, mcp, runner: workflowRunner };
 }
