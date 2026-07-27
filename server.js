@@ -25,7 +25,6 @@ function createApp({ store, client, baseUrl = '', autoRun = true, runner = null 
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'self'; base-uri 'none'; form-action 'self'");
     next();
   });
   app.use(express.json({ limit: '2mb' }));

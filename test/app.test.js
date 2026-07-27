@@ -108,7 +108,13 @@ test('HTTP app supports question intake and browser-safe report rendering', asyn
   const { app } = createApp({ store, client: fakeClient(store), baseUrl: '', autoRun: false });
   const { server, base } = await listen(app);
   t.after(() => server.close());
-  const health = await fetch(`${base}/_sym/health`).then((response) => response.json());
+  const home = await fetch(base);
+  assert.equal(home.headers.get('content-security-policy'), null, 'Symposium must be able to embed the app');
+  assert.equal(home.headers.get('x-frame-options'), null, 'the app must not emit an anti-iframe header');
+  const healthResponse = await fetch(`${base}/_sym/health`);
+  assert.equal(healthResponse.headers.get('content-security-policy'), null);
+  assert.equal(healthResponse.headers.get('x-frame-options'), null);
+  const health = await healthResponse.json();
   assert.equal(health.production_mode, 'read');
   const created = await fetch(`${base}/api/reports`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ question: 'What changed?' }) });
   assert.equal(created.status, 201);
