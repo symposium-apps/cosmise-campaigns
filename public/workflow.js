@@ -107,7 +107,7 @@
           <progress class="build-progress-native" max="100"></progress>
           <div class="build-progress-copy"><span></span><strong></strong></div>
           <div class="build-log-host"></div>
-          <p class="build-preview-note">Preview data only · production updates come from real API calls</p>
+          <p class="build-preview-note">Preview only · your report updates here while the Agent works</p>
         </article>
       </div>
     </div>`;
