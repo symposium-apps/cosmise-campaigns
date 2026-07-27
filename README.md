@@ -1,17 +1,19 @@
-# Cosmise Campaign Reports
+# Cosmise Campaigns
 
-A standalone Symposium app that turns campaign questions into saved, evidence-backed Markdown reports using a private, read-only Cosmise Campaigns connection.
+A profile-local Symposium workspace where the active Agent turns campaign questions into saved, evidence-backed Markdown reports using a private, read-only Cosmise Campaigns connection.
 
 ![Campaign Reports](assets/icon.png)
 
 ## What it does
 
-- accepts a campaign-analysis question from Symposium or the browser;
+- receives campaign-analysis work from the active Symposium Agent after the app is dragged from the Dock into chat;
 - privately reads credential-scoped campaign context, performance, attribution models, trends, mapping health, evidence, journeys, and diagnostics;
 - shows backend-authoritative workflow and API-call progress while analysis is running;
 - writes, validates, and stores a sanitized Markdown report;
 - renders bounded local charts and mobile-safe tables;
 - creates expiring, revocable report snapshots only after explicit confirmation.
+
+The browser is the report workspace, not a second conversational Agent. To begin or recover work, drag **Cosmise Campaigns** from the Dock to the Agent and ask the campaign question in chat. Public iframe requests cannot start credential-backed analysis; the Agent operates the loopback-only app MCP through SYM-Node.
 
 The app exposes only its own `campaign_reports_*` MCP operations. Raw production Campaigns operations, authorization headers, credentials, and upstream envelopes are never exposed to the browser or local MCP catalog.
 
@@ -20,7 +22,8 @@ The app exposes only its own `campaign_reports_*` MCP operations. Raw production
 The repository follows the SYM app v1 contract:
 
 - `sym-app.json` — app identity, runtime, configuration, permissions, persistence, agent, and marketplace metadata;
-- `AGENTS.md` — app-local agent contract;
+- `AGENTS.md` — app-local Agent entry contract;
+- `skills/using-cosmise-campaign-reports/SKILL.md` and `scripts/install-hermes-skill.js` — repository-owned profile skill and safe installer;
 - `package.json` / `package-lock.json` — inferred Node install and start lifecycle;
 - `server.js` — managed HTTP runtime honoring worker-provided `HOST` and `PORT`;
 - `/_sym/health` — managed-runtime health check;

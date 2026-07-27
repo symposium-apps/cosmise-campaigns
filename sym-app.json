@@ -2,8 +2,8 @@
   "$schema": "https://sympo.si/schemas/sym-app-v1.json",
   "schema_version": 1,
   "id": "cosmise-campaigns",
-  "name": "Cosmise Campaign Reports",
-  "description": "Ask campaign questions and receive verified read-only Markdown reports.",
+  "name": "Cosmise Campaigns",
+  "description": "A read-only campaign evidence and report workspace operated by your Symposium Agent.",
   "runtime": {
     "type": "node",
     "health_path": "/_sym/health",
@@ -26,7 +26,8 @@
   "agent": {
     "instructions_path": "AGENTS.md",
     "bootstrap_path": "/api/agent/bootstrap",
-    "mcp_path": "/mcp"
+    "mcp_path": "/mcp",
+    "activity_state_path": "/api/state"
   },
   "permissions": [{ "id": "network.external", "reason": "Call the read-only Cosmise Campaigns API from the trusted backend." }],
   "data": {
@@ -36,7 +37,7 @@
     "cache": false
   },
   "marketplace": {
-    "subtitle": "Campaign Reports",
+    "subtitle": "Agent-built campaign reports",
     "category": "analytics",
     "icon": "assets/icon.png",
     "screenshots": [

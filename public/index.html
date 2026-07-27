@@ -4,40 +4,70 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f5f7f5">
-  <title>Cosmise Campaign Reports</title>
+  <title>Cosmise Campaigns</title>
   <link rel="icon" href="/campaign-reports-icon.png" type="image/png">
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/workflow.css?v=2.1.0">
   <link rel="stylesheet" href="/workflow-polish.css?v=1.0.1">
   <link rel="stylesheet" href="/responsive.css?v=1.0.0">
+  <link rel="stylesheet" href="/home.css?v=1.1.0">
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand"><img src="/campaign-reports-icon.png" alt=""><div><strong>Campaign Reports</strong><span>Read-only analysis</span></div></div>
-      <form id="question-form" class="question-form">
-        <label for="question">Ask a campaign question</label>
-        <textarea id="question" maxlength="1000" placeholder="Which campaigns changed most between attribution models?"></textarea>
-        <button type="submit">Start report</button>
-      </form>
+      <div class="brand"><img src="/campaign-reports-icon.png" alt=""><div><strong>Cosmise Campaigns</strong><span>Agent reports · read-only</span></div></div>
+      <section class="agent-rail-note" aria-label="How to ask for campaign help">
+        <span class="agent-orbit" aria-hidden="true">✦</span>
+        <div><strong>Ask your Agent</strong><p>Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help.</p></div>
+      </section>
       <div class="rail-heading"><span>Reports</span><span id="report-count">0</span></div>
       <nav id="reports" aria-label="Campaign reports"></nav>
-      <a class="workflow-spec-link" href="/workflow-spec.html">Watch the build demo</a>
+      <a class="workflow-spec-link" href="/workflow-spec.html">Preview report activity</a>
       <div id="connection" class="connection"></div>
     </aside>
     <main class="workspace">
       <header class="toolbar">
-        <div><div id="report-title" class="report-title">Campaign Reports</div><div id="report-meta" class="report-meta">Ask a question to begin.</div></div>
-        <div class="toolbar-actions"><button id="copy" class="secondary" hidden>Copy Markdown</button><button id="download" class="secondary" hidden>Download</button><button id="share" class="secondary" hidden>Share</button></div>
+        <div><div id="report-title" class="report-title">Cosmise Campaigns</div><div id="report-meta" class="report-meta">Campaign analysis by your Agent.</div></div>
+        <div class="toolbar-actions"><button id="copy" class="secondary" hidden>Copy Markdown</button><button id="download" class="secondary" hidden>Download</button></div>
       </header>
+      <aside id="agent-help" class="agent-help" aria-live="polite">
+        <span class="agent-help-icon" aria-hidden="true">✦</span>
+        <div><strong>Nothing happening or the report is not being viewed?</strong><p>Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed.</p></div>
+      </aside>
       <section id="workflow" class="workflow-shell" aria-live="polite" aria-label="Live report workflow" hidden></section>
       <details id="activity-details" class="activity-details" hidden><summary>API activity details</summary><section id="activity" class="activity" aria-live="polite" aria-label="Local API activity" hidden></section></details>
-      <section id="content" class="content"><div class="empty"><img src="/campaign-reports-icon.png" alt=""><h1>Campaign answers, written clearly.</h1><p>Ask through Symposium or start a report here. The agent reads private campaign data and writes an evidence-backed Markdown report.</p></div></section>
+      <section id="content" class="content home-content">
+        <div class="home">
+          <div class="home-mark"><img src="/campaign-reports-icon.png" alt=""><span>Cosmise Campaigns</span></div>
+          <div class="home-copy">
+            <span class="home-eyebrow">Agent-operated reporting</span>
+            <h1>Campaign answers built around your question.</h1>
+            <p>Your Agent clarifies the scope, chooses the relevant read-only campaign evidence, and writes a verified report here. This workspace shows the work as it happens and keeps the result ready to revisit.</p>
+          </div>
+          <article class="agent-path-card">
+            <div class="agent-path-copy"><span class="path-kicker">How to begin</span><h2>Bring the app to your Agent</h2><p>Drag the Cosmise Campaigns app from the Dock to the Agent, then ask the campaign question in your own words.</p></div>
+            <div class="drag-journey" aria-label="Drag Cosmise Campaigns from the Dock to the Agent">
+              <span class="journey-node journey-app"><img src="/campaign-reports-icon.png" alt=""><b>Cosmise Campaigns</b><small>Dock</small></span>
+              <span class="journey-line" aria-hidden="true"><i></i><b>Drag</b></span>
+              <span class="journey-node journey-agent"><span aria-hidden="true">✦</span><b>Your Agent</b><small>Ask for help</small></span>
+            </div>
+          </article>
+          <div class="question-examples">
+            <span>Try asking</span>
+            <ul>
+              <li>Why did our highest-spend campaigns change last month?</li>
+              <li>Which campaigns are most sensitive to the attribution model?</li>
+              <li>Investigate spend with no attributed revenue.</li>
+            </ul>
+          </div>
+          <div class="home-boundary"><strong>Nothing is changed in production.</strong><span>Campaign data is read privately. Reports are written and validated locally.</span></div>
+        </div>
+      </section>
     </main>
   </div>
   <div id="toast" class="toast" hidden></div>
   <script src="/chart.js" defer></script>
   <script src="/workflow.js?v=2.0.4" defer></script>
-  <script src="/app.js?v=2.1.0" defer></script>
+  <script src="/app.js?v=3.0.0" defer></script>
 </body>
 </html>

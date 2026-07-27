@@ -4,6 +4,7 @@ const express = require('express');
 const os = require('node:os');
 const path = require('node:path');
 const { version } = require('./package.json');
+const { AGENT_INSTRUCTIONS } = require('./lib/agent-bootstrap');
 const { CampaignClient } = require('./lib/campaign-client');
 const { renderMarkdown } = require('./lib/markdown');
 const { BOOTSTRAP, TOOLS, createMcp } = require('./lib/mcp');
@@ -17,7 +18,7 @@ function localOnly(req, res, next) {
   next();
 }
 
-function createApp({ store, client, baseUrl = '', autoRun = true, runner = null }) {
+function createApp({ store, client, baseUrl = '', autoRun = false, runner = null }) {
   const app = express();
   const mcp = createMcp({ store, client, baseUrl });
   const workflowRunner = runner || new WorkflowRunner({ store, mcp });
@@ -31,13 +32,14 @@ function createApp({ store, client, baseUrl = '', autoRun = true, runner = null 
 
   app.get('/_sym/health', (_req, res) => res.json({ ok: true, service: 'cosmise-campaigns', version, backend_mcp_configured: client.configured(), production_mode: 'read', local_tool_count: TOOLS.length }));
   app.get('/api/agent/bootstrap', (_req, res) => res.json(BOOTSTRAP));
+  app.get('/api/agent/instructions', (_req, res) => res.json({ instructions: AGENT_INSTRUCTIONS, bootstrap: '/api/agent/bootstrap', mcp: '/mcp' }));
   app.get('/api/state', (_req, res) => res.json(store.snapshot()));
   app.get('/api/reports/:id', (req, res) => {
     const report = store.report(req.params.id, true);
     if (!report) return res.status(404).json({ ok: false, error: 'Report not found.' });
     res.json({ report, rendered_html: renderMarkdown(report.markdown) });
   });
-  app.post('/api/reports', async (req, res) => {
+  app.post('/api/reports', localOnly, async (req, res) => {
     const question = String(req.body?.question || '').trim();
     if (!question) return res.status(400).json({ ok: false, error: 'Question is required.' });
     if (store.snapshot().connection.state !== 'ready') return res.status(503).json({ ok: false, error: 'Campaign access is not ready yet.' });
@@ -51,14 +53,14 @@ function createApp({ store, client, baseUrl = '', autoRun = true, runner = null 
     try { res.json({ view: store.setView(req.body?.active_report_id ?? null) }); }
     catch (error) { res.status(400).json({ ok: false, error: error.message }); }
   });
-  app.post('/api/reports/:id/share', (req, res) => {
+  app.post('/api/reports/:id/share', localOnly, (req, res) => {
     try {
       if (req.body?.confirm !== true) return res.status(400).json({ ok: false, error: 'Confirmation is required.' });
       const share = store.createShare(req.params.id, req.body?.expires_in_hours);
       res.json({ shared: true, url: `${baseUrl}/share/${share.token}`, expires_at: share.expires_at });
     } catch (error) { res.status(400).json({ ok: false, error: error.message }); }
   });
-  app.delete('/api/reports/:id/share', (req, res) => {
+  app.delete('/api/reports/:id/share', localOnly, (req, res) => {
     try {
       if (req.body?.confirm !== true) return res.status(400).json({ ok: false, error: 'Confirmation is required.' });
       res.json({ revoked: true, report: store.revokeShare(req.params.id) });
@@ -112,7 +114,7 @@ if (require.main === module) {
   const baseUrl = `http://127.0.0.1:${port}`;
   const { app } = createApp({ store, client, baseUrl });
   app.listen(port, host, () => {
-    console.log(`Cosmise Campaign Reports: ${baseUrl}`);
+    console.log(`Cosmise Campaigns: ${baseUrl}`);
     console.log(`LAN: http://${lanAddress()}:${port}`);
   });
 }

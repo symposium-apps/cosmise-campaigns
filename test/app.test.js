@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
-const { spawn } = require('node:child_process');
+const { spawn, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const net = require('node:net');
 const os = require('node:os');
@@ -10,7 +10,7 @@ const test = require('node:test');
 const { ReportStore } = require('../lib/store');
 const { CampaignClient, READ_NAMES, WRITE_NAMES, activityDetail } = require('../lib/campaign-client');
 const { renderMarkdown, validateReport } = require('../lib/markdown');
-const { TOOLS, createMcp } = require('../lib/mcp');
+const { BOOTSTRAP, TOOLS, createMcp } = require('../lib/mcp');
 const { buildReport, dateRangeFromQuestion, selectModels } = require('../lib/report-builder');
 const { workflowTemplate } = require('../lib/workflow-runner');
 const { createApp } = require('../server');
@@ -50,8 +50,26 @@ test('local MCP exposes only app-owned report operations', () => {
   assert(TOOLS.length > 10);
   assert(TOOLS.every((tool) => tool.name.startsWith('campaign_reports_')));
   assert(TOOLS.every((tool) => !tool.name.startsWith('campaigns_')));
+  assert(TOOLS.some((tool) => tool.name === 'campaign_reports_set_view'));
   const serialized = JSON.stringify(TOOLS);
   for (const write of WRITE_NAMES) assert.equal(serialized.includes(write), false);
+});
+
+test('repository owns a profile-scoped Campaign Reports skill and detailed Agent bootstrap', () => {
+  const root = path.join(__dirname, '..');
+  const skillName = 'using-cosmise-campaign-reports';
+  const skill = fs.readFileSync(path.join(root, 'skills', skillName, 'SKILL.md'), 'utf8');
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'campaign-skill-profile-'));
+  const installed = spawnSync(process.execPath, ['scripts/install-hermes-skill.js'], { cwd: root, env: { ...process.env, HERMES_HOME: profileRoot }, encoding: 'utf8' });
+  assert.equal(installed.status, 0, installed.stderr);
+  assert(fs.existsSync(path.join(profileRoot, 'skills', skillName, 'SKILL.md')));
+  assert.match(skill, /Ask one compact clarification/);
+  assert.match(skill, /never present total credit as deduplicated revenue/);
+  assert.match(agents, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed/);
+  assert.equal(BOOTSTRAP.skill_setup.name, skillName);
+  assert.match(BOOTSTRAP.product_model.analyst, /active Symposium Agent/);
+  assert(BOOTSTRAP.report_rules.length >= 8);
 });
 
 test('production credential verification accepts broader credentials while enforcing safe reads', async () => {
@@ -97,6 +115,8 @@ test('report lifecycle is revision-protected and validates before completion', a
   assert.equal(checked.validation.ok, true);
   const completed = await mcp.call('campaign_reports_complete', { report_id: id, expected_revision: checked.report.revision });
   assert.equal(completed.report.status, 'ready');
+  await mcp.call('campaign_reports_set_view', { report_id: id });
+  assert.equal((await mcp.call('campaign_reports_get_state')).view.active_report_id, id);
   assert(saved.report.markdown.includes('Performance review'));
   const phases = store.snapshot().activities.filter((item) => item.report_id === id).map((item) => `${item.operation}:${item.status}`);
   for (const expected of ['report_prepare:success','report_analysis:success','report_write:success','report_validate:success','report_complete:success']) assert(phases.includes(expected), `missing ${expected}`);
@@ -117,6 +137,11 @@ test('HTTP app supports question intake and browser-safe report rendering', asyn
   assert.equal(healthResponse.headers.get('x-frame-options'), null);
   const health = await healthResponse.json();
   assert.equal(health.production_mode, 'read');
+  const agentInstructions = await fetch(`${base}/api/agent/instructions`).then((response) => response.json());
+  assert.match(agentInstructions.instructions, /Dock-to-Agent request as tailored analysis/);
+  assert.equal(agentInstructions.mcp, '/mcp');
+  const publicMutation = await fetch(`${base}/api/reports`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.10' }, body: JSON.stringify({ question: 'This must not run from the public app.' }) });
+  assert.equal(publicMutation.status, 403, 'the public iframe must not start credential-backed analysis');
   const created = await fetch(`${base}/api/reports`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ question: 'What changed?' }) });
   assert.equal(created.status, 201);
   const body = await created.json();
@@ -180,6 +205,11 @@ test('workflow UI is event-driven, animated, responsive, reduced-motion safe, an
   assert.match(workflowScript, /slice\(0, 3\)/);
   assert.match(workflowScript, /campaign-reports-icon\.png/);
   assert.match(html, /aria-live="polite"/);
+  assert.match(html, /Nothing happening or the report is not being viewed\?/);
+  assert.match(html, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed\./);
+  assert.match(html, /Bring the app to your Agent/);
+  assert.match(script, /renderAgentHelp/);
+  assert.doesNotMatch(html, /question-form|Start report|Generate standard report/);
   assert.match(spec, /What users see while a report is building/);
   assert.match(spec, /workflow\.js/);
 });
@@ -190,6 +220,7 @@ test('Campaign Reports icon is used across marketplace and browser identity surf
   const index = fs.readFileSync(path.join(root, 'public', 'index.html'), 'utf8');
   const preview = fs.readFileSync(path.join(root, 'public', 'workflow-spec.html'), 'utf8');
   assert.equal(manifest.marketplace.icon, 'assets/icon.png');
+  assert.equal(manifest.name, 'Cosmise Campaigns');
   assert.equal(manifest.marketplace.accent_color, '#3D45D8');
   assert(fs.existsSync(path.join(root, manifest.marketplace.icon)));
   assert.deepEqual(

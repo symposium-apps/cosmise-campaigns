@@ -32,6 +32,13 @@
     window.WorkflowUI?.render($('#workflow'),workflow,{activities});
   }
 
+  function renderAgentHelp() {
+    const metadata=activeMetadata();
+    const stalled=metadata?.status==='queued'&&!metadata?.workflow;
+    const needsHelp=!metadata||stalled||metadata.status==='failed'||metadata.workflow?.status==='failed';
+    $('#agent-help').hidden=!needsHelp;
+  }
+
   function renderActivity() {
     const id=ui.state?.view?.active_report_id;
     const items=(ui.state?.activities||[]).filter((item)=>item.report_id===id).slice(0,20);
@@ -54,17 +61,18 @@
     if(write) await request('/api/view',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({active_report_id:id})});
     const body=await request(`/api/reports/${encodeURIComponent(id)}`);
     ui.report=body.report;
+    $('#content').classList.remove('home-content');
     $('#report-title').textContent=body.report.title;
     $('#report-meta').textContent=`${statusLabel(body.report.status)} · revision ${body.report.revision} · updated ${new Date(body.report.updated_at).toLocaleString()}`;
     $('#content').innerHTML=`<article class="markdown-body">${body.rendered_html}</article>`;
     window.renderCampaignCharts?.($('#content'));
-    ['copy','download','share'].forEach((buttonId)=>$(`#${buttonId}`).hidden=false);
+    ['copy','download'].forEach((buttonId)=>$(`#${buttonId}`).hidden=false);
     renderWorkflow(); renderActivity();
   }
 
   function renderState(state) {
     ui.state=state;
-    renderConnection(); renderReports(); renderHeader(); renderWorkflow(); renderActivity();
+    renderConnection(); renderReports(); renderHeader(); renderWorkflow(); renderActivity(); renderAgentHelp();
     const active=state.view?.active_report_id;
     const metadata=activeMetadata();
     if(active && (!ui.report || ui.report.id!==active || ui.report.revision!==metadata?.revision)) selectReport(active,false).catch(()=>{});
@@ -72,22 +80,9 @@
 
   async function refresh() { renderState(await request('/api/state')); }
 
-  $('#question-form').addEventListener('submit',async(event)=>{
-    event.preventDefault();
-    const question=$('#question').value.trim();
-    if(!question)return;
-    const button=event.currentTarget.querySelector('button');
-    button.disabled=true; button.textContent='Starting…';
-    try {
-      const body=await request('/api/reports',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question})});
-      $('#question').value='';
-      await refresh(); await selectReport(body.report.id,false);
-      toast(body.automatic_workflow?'Automatic read-only analysis started.':'Report created.');
-    } catch(error){toast(error.message);} finally {button.disabled=false;button.textContent='Start report';}
-  });
   $('#copy').addEventListener('click',async()=>{if(!ui.report)return;await navigator.clipboard.writeText(ui.report.markdown);toast('Markdown copied.');});
   $('#download').addEventListener('click',()=>{if(!ui.report)return;const blob=new Blob([ui.report.markdown],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${ui.report.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'campaign-report'}.md`;a.click();URL.revokeObjectURL(a.href);});
-  $('#share').addEventListener('click',async()=>{if(!ui.report||activeMetadata()?.status!=='ready'){toast('Complete and validate the report before sharing.');return;}if(!confirm('Create an expiring share snapshot of this report?'))return;try{const body=await request(`/api/reports/${ui.report.id}/share`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({confirm:true,expires_in_hours:168})});await navigator.clipboard.writeText(body.url);toast('Share link copied.');}catch(error){toast(error.message);}});
+
 
   const events=new EventSource('/api/events/stream');
   events.addEventListener('state',(event)=>{try{renderState(JSON.parse(event.data));}catch{}});

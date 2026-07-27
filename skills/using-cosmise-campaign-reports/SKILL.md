@@ -1,0 +1,112 @@
+---
+name: using-cosmise-campaign-reports
+description: Use when answering campaign questions with the installed Cosmise Campaigns app.
+version: 1.0.0
+author: Cosmise Campaigns
+license: Proprietary
+metadata:
+  hermes:
+    tags: [cosmise, campaigns, attribution, reporting, analytics]
+---
+
+# Using Cosmise Campaign Reports
+
+## Product role
+
+The active Symposium Agent is the analyst. Cosmise Campaigns is the profile-local, read-only evidence and report workspace. Use the Agent to understand the request, clarify scope, select reads, write the analysis, validate it, and leave the resulting report selected in the app.
+
+This app is independent from Cosmise Streamboards. Never use Streamboards tools for this workflow.
+
+## Required entry sequence
+
+1. Confirm that the user attached or named the installed `cosmise-campaigns` app.
+2. Call SYM-Node `get_app_agent_context` with `app_id="cosmise-campaigns"`.
+3. Read the returned bootstrap, instructions, and exact local tool schemas.
+4. Invoke operations through SYM-Node `call_app_tool`; never guess the app's dynamic port or call its public URL as an Agent API.
+5. Call `campaign_reports_get_bootstrap` and `campaign_reports_get_state`.
+6. Require `runtime.backend_mcp_configured=true` and `connection.state="ready"`.
+7. Start a report only after the question has enough scope to answer honestly.
+
+## Clarify before starting
+
+Resolve these when they materially affect the answer:
+
+- reporting period or comparison periods;
+- platform, campaign, campaign type, or all-platform scope;
+- attribution model or whether a model comparison is wanted;
+- currency when it is not supplied safely by context;
+- whether the request is ranking, change analysis, attribution sensitivity, mapping health, tracking quality, evidence review, or one order journey.
+
+Do not silently convert an ambiguous question into a previous-month, all-platform, six-model report. Ask one compact clarification when essential. If the user asks for best judgment, state the chosen assumptions in the report.
+
+## Agent-driven report loop
+
+1. `campaign_reports_start` with the exact question and a concise customer-facing title.
+2. `campaign_reports_read_context`; verify the credential-resolved organisation.
+3. `campaign_reports_read_capabilities`; use only supported models and reads.
+4. Select only operations required by the question:
+   - `campaign_reports_read_performance` for hierarchy, spend, revenue, orders, ROAS, and CPA;
+   - `campaign_reports_compare_attribution` for bounded model sensitivity;
+   - `campaign_reports_read_trend` for movement or period shape;
+   - `campaign_reports_read_mapping_health` for linkage gaps and exact-candidate diagnostics;
+   - `campaign_reports_read_diagnostics` for identity and revenue-quality concerns;
+   - `campaign_reports_read_evidence` for bounded support behind a finding;
+   - `campaign_reports_read_journey` only for one specified authorized order journey.
+5. `campaign_reports_save_markdown` with the current revision.
+6. `campaign_reports_validate`; repair every validation error.
+7. `campaign_reports_complete` with the latest revision.
+8. `campaign_reports_set_view` with the completed report ID.
+9. `campaign_reports_get_state`; require the report to be ready and selected.
+10. Share only after an explicit user request with `confirm=true`.
+
+On failure, call `campaign_reports_fail` with a safe explanation and current revision. Never leave a report appearing to run after work has stopped.
+
+## Question-to-tool routing
+
+| User intent | Minimum useful reads |
+|---|---|
+| Best or worst campaigns | Context, capabilities, performance |
+| What changed over time | Context, capabilities, comparable performance, trend |
+| Attribution disagreement | Context, capabilities, compare attribution |
+| Spend with no attributed result | Performance, mapping health, diagnostics; evidence when needed |
+| Is tracking reliable? | Context, mapping health, diagnostics |
+| Why did this campaign or order receive credit? | Context/performance, bounded evidence, journey only when authorized |
+
+Do not run every read merely to make the activity feed look busy.
+
+## Report contract
+
+Every completed report must include:
+
+- an H1 title and original question;
+- explicit dates, currency, platform/campaign scope, attribution models, and source boundary;
+- a direct executive answer;
+- evidence tables or bounded charts supporting the answer;
+- separation of observed facts, calculations, interpretation, and recommendations;
+- method and limitations;
+- no credentials, raw upstream envelopes, hidden identifiers, scripts, or unsupported causal claims.
+
+Provider spend is not changed by attribution model. Attribution allocation is not causal incrementality. Fractional and assist models can produce fractional or duplicated credit; never present total credit as deduplicated revenue or ROAS.
+
+## Visible-work verification
+
+Before replying, verify that:
+
+- the intended report exists and is selected;
+- workflow/activity reflects the reads actually performed;
+- validation succeeded;
+- status is `ready` or safely `failed`;
+- the rendered report answers the original question rather than a generic template.
+
+If the user says nothing is happening or the report is not being viewed, tell them exactly:
+
+**Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed.**
+
+Then inspect state, select the intended report, and continue or fail it honestly.
+
+## Security boundary
+
+- Use only this app's local `campaign_reports_*` tools.
+- Never request, print, persist, summarize, encode, hash, or send the Cosmise credential anywhere.
+- Never mutate mappings, merges, aliases, extraction rules, campaigns, budgets, customers, or production settings.
+- Treat sharing as a separate confirmed side effect.
