@@ -4,13 +4,23 @@ Cosmise Campaigns is the profile-local, read-only evidence and report workspace.
 
 This app is independent from Cosmise Streamboards. Never use or expose dashboard-building APIs here.
 
+## Mandatory app-first gate
+
+Every campaign question or follow-up in this app's conversation must create a new visible report through the wrapper in the same turn. Before drafting an answer:
+
+1. Call `symposium_context.get_app_agent_context(app_id="cosmise-campaigns")`.
+2. Call `symposium_context.call_app_tool` for `campaign_reports_start` and retain the returned `report.id`.
+3. Use `symposium_context.call_app_tool` for every subsequent app operation.
+
+Never answer from prior chat content, an old report, cached results, or direct provider Campaigns tools. Without a same-turn `campaign_reports_start` receipt, do not provide analysis and do not claim a report exists. The finished report is the answer. Never paste findings, metrics, tables, interpretation, recommendations, or summaries into chat. After ready-and-selected state is verified, the entire final reply must be exactly: **Your report is ready in Cosmise Campaigns.**
+
 ## Required first actions
 
 1. Run `node scripts/install-hermes-skill.js` to install or refresh the repository-owned `using-cosmise-campaign-reports` skill in the active Hermes profile. The installer requires profile-scoped `HERMES_HOME` or explicit `HERMES_PROFILE`; never infer a profile from a workspace, organisation, customer, or `SYM_PROFILE_ID`.
 2. Load `using-cosmise-campaign-reports`. If the current session was created before first installation, restart or begin a fresh Agent session so the skill is indexed.
-3. Use SYM-Node `get_app_agent_context` with `app_id="cosmise-campaigns"`.
+3. Use `symposium_context.get_app_agent_context` with `app_id="cosmise-campaigns"`.
 4. Read the returned bootstrap, MCP instructions, and local tool schemas.
-5. Invoke every app operation through SYM-Node `call_app_tool`; never guess the managed port or call the public app URL as an agent API.
+5. Invoke every app operation through `symposium_context.call_app_tool`; never guess the managed port, use direct provider tools, or call the public app URL as an agent API.
 6. Call `campaign_reports_get_bootstrap` and `campaign_reports_get_state` before production reads.
 7. Proceed only when `runtime.backend_mcp_configured=true` and `connection.state="ready"`.
 
@@ -37,6 +47,7 @@ This app is independent from Cosmise Streamboards. Never use or expose dashboard
 8. `campaign_reports_complete` with the latest revision.
 9. `campaign_reports_set_view` with the completed report ID.
 10. `campaign_reports_get_state`; require `status="ready"` and the intended `view.active_report_id` before replying.
+11. Reply exactly `Your report is ready in Cosmise Campaigns.` and nothing else.
 
 The app automatically records safe running/success/failure activity around every private production read. Do not duplicate those events manually.
 

@@ -61,14 +61,23 @@ test('repository owns a profile-scoped Campaign Reports skill and detailed Agent
   const skill = fs.readFileSync(path.join(root, 'skills', skillName, 'SKILL.md'), 'utf8');
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'campaign-skill-profile-'));
+  const legacySkill = path.join(profileRoot, 'skills', 'cosmise-campaign-reports');
+  fs.mkdirSync(legacySkill, { recursive: true });
+  fs.writeFileSync(path.join(legacySkill, 'SKILL.md'), 'legacy direct-provider skill');
   const installed = spawnSync(process.execPath, ['scripts/install-hermes-skill.js'], { cwd: root, env: { ...process.env, HERMES_HOME: profileRoot }, encoding: 'utf8' });
   assert.equal(installed.status, 0, installed.stderr);
   assert(fs.existsSync(path.join(profileRoot, 'skills', skillName, 'SKILL.md')));
+  assert.equal(fs.existsSync(legacySkill), false, 'legacy direct-provider skill must be removed');
+  assert.match(installed.stdout, /removed_legacy_skill=cosmise-campaign-reports/);
+  assert.match(skill, /symposium_context\.get_app_agent_context/);
+  assert.match(skill, /Prior chat results, an older completed report, cached data, or direct provider tools never satisfy this gate/);
   assert.match(skill, /Ask one compact clarification/);
   assert.match(skill, /never present total credit as deduplicated revenue/);
   assert.match(agents, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed/);
   assert.equal(BOOTSTRAP.skill_setup.name, skillName);
   assert.match(BOOTSTRAP.product_model.analyst, /active Symposium Agent/);
+  assert.equal(BOOTSTRAP.chat_output_contract.required_final_reply, 'Your report is ready in Cosmise Campaigns.');
+  assert.equal(BOOTSTRAP.chat_output_contract.duplicate_analysis_in_chat, false);
   assert(BOOTSTRAP.report_rules.length >= 8);
 });
 
@@ -106,17 +115,29 @@ test('report lifecycle is revision-protected and validates before completion', a
   const mcp = createMcp({ store, client: fakeClient(store), baseUrl: 'http://127.0.0.1' });
   const started = await mcp.call('campaign_reports_start', { question: 'Which campaigns performed best?', title: 'Performance review' });
   const id = started.report.id;
+  assert.equal(started.report.workflow.mode, 'agent');
+  assert.equal(started.report.workflow.status, 'running');
+  assert.equal(started.report.workflow.current_stage, 'scope');
   await mcp.call('campaign_reports_read_performance', { report_id: id, query: { start_date: '2026-04-01', end_date: '2026-04-30' } });
+  assert.equal(store.report(id, false).workflow.current_stage, 'analysis');
+  assert.equal(store.report(id, false).workflow.status, 'running');
   await mcp.call('campaign_reports_compare_attribution', { report_id: id, query: { start_date: '2026-04-01', end_date: '2026-04-30' }, model_keys: ['last_click_client', 'position_based'] });
   const markdown = '# Performance review\n\n## Scope\n\nApril 2026, USD, last click.\n\n| Campaign | Spend | Revenue |\n|---|---:|---:|\n| Example | 10 | 20 |\n\n## Method and limitations\n\nRead-only snapshot; late data may change.\n';
   await assert.rejects(() => mcp.call('campaign_reports_save_markdown', { report_id: id, expected_revision: 0, markdown }), /revision conflict/);
   const saved = await mcp.call('campaign_reports_save_markdown', { report_id: id, expected_revision: 1, markdown });
+  assert.equal(store.report(id, false).workflow.current_stage, 'writing');
   const checked = await mcp.call('campaign_reports_validate', { report_id: id });
   assert.equal(checked.validation.ok, true);
+  assert.equal(store.report(id, false).workflow.current_stage, 'review');
   const completed = await mcp.call('campaign_reports_complete', { report_id: id, expected_revision: checked.report.revision });
   assert.equal(completed.report.status, 'ready');
-  await mcp.call('campaign_reports_set_view', { report_id: id });
-  assert.equal((await mcp.call('campaign_reports_get_state')).view.active_report_id, id);
+  assert.equal(completed.chat_handoff.after_select_and_verify_reply_exactly, 'Your report is ready in Cosmise Campaigns.');
+  const selected = await mcp.call('campaign_reports_set_view', { report_id: id });
+  assert.equal(selected.chat_handoff.reply_exactly, 'Your report is ready in Cosmise Campaigns.');
+  const finalState = await mcp.call('campaign_reports_get_state');
+  assert.equal(finalState.view.active_report_id, id);
+  assert.equal(finalState.reports.find((report) => report.id === id).workflow.status, 'ready');
+  assert.equal(finalState.reports.find((report) => report.id === id).workflow.percent, 100);
   assert(saved.report.markdown.includes('Performance review'));
   const phases = store.snapshot().activities.filter((item) => item.report_id === id).map((item) => `${item.operation}:${item.status}`);
   for (const expected of ['report_prepare:success','report_analysis:success','report_write:success','report_validate:success','report_complete:success']) assert(phases.includes(expected), `missing ${expected}`);
@@ -139,6 +160,7 @@ test('HTTP app supports question intake and browser-safe report rendering', asyn
   assert.equal(health.production_mode, 'read');
   const agentInstructions = await fetch(`${base}/api/agent/instructions`).then((response) => response.json());
   assert.match(agentInstructions.instructions, /Dock-to-Agent request as tailored analysis/);
+  assert.match(agentInstructions.instructions, /entire final chat reply must be exactly: Your report is ready in Cosmise Campaigns/);
   assert.equal(agentInstructions.mcp, '/mcp');
   const publicMutation = await fetch(`${base}/api/reports`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.10' }, body: JSON.stringify({ question: 'This must not run from the public app.' }) });
   assert.equal(publicMutation.status, 403, 'the public iframe must not start credential-backed analysis');
@@ -152,6 +174,9 @@ test('HTTP app supports question intake and browser-safe report rendering', asyn
   assert.match(await demo.text(), /What users see while a report is building/);
   const listed = await rpc(base, 'tools/list');
   assert(listed.result.tools.every((tool) => tool.name.startsWith('campaign_reports_')));
+  const initialized = await rpc(base, 'initialize');
+  assert.match(initialized.result.instructions, /reply exactly: Your report is ready in Cosmise Campaigns/);
+  assert.match(initialized.result.instructions, /app receives realtime state/);
 });
 
 test('managed runtime honors worker-provided HOST and PORT', async (t) => {

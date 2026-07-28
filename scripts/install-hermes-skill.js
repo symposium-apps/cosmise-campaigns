@@ -32,6 +32,14 @@ function install() {
     if (fs.existsSync(destination)) fs.renameSync(destination, backup);
     fs.renameSync(temporary, destination);
     fs.rmSync(backup, { recursive: true, force: true });
+
+    // Remove the retired direct-provider skill. It bypasses the installed-app
+    // wrapper, so the Campaigns UI cannot receive live report activity.
+    const legacy = path.join(parent, 'cosmise-campaign-reports');
+    if (fs.existsSync(legacy)) {
+      fs.rmSync(legacy, { recursive: true, force: true });
+      console.log('removed_legacy_skill=cosmise-campaign-reports');
+    }
   } catch (error) {
     fs.rmSync(temporary, { recursive: true, force: true });
     if (!fs.existsSync(destination) && fs.existsSync(backup)) fs.renameSync(backup, destination);

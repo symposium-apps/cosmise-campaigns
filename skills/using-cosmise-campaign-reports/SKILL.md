@@ -1,7 +1,7 @@
 ---
 name: using-cosmise-campaign-reports
-description: Use when answering campaign questions with the installed Cosmise Campaigns app.
-version: 1.0.0
+description: Use for every campaign question in a Cosmise Campaigns conversation. App-first execution is mandatory.
+version: 1.2.0
 author: Cosmise Campaigns
 license: Proprietary
 metadata:
@@ -17,12 +17,24 @@ The active Symposium Agent is the analyst. Cosmise Campaigns is the profile-loca
 
 This app is independent from Cosmise Streamboards. Never use Streamboards tools for this workflow.
 
+## Non-negotiable execution gate
+
+For **every** campaign-analysis request in a Cosmise Campaigns conversation, including follow-ups:
+
+1. Call `symposium_context.get_app_agent_context` for `cosmise-campaigns` in the current turn.
+2. Call `symposium_context.call_app_tool` → `campaign_reports_start` **before reading campaign data or drafting an answer**.
+3. Perform every read, write, validation, completion, and view-selection operation with `symposium_context.call_app_tool`.
+
+Prior chat results, an older completed report, cached data, or direct provider tools never satisfy this gate. If no new `campaign_reports_start` result containing a `report.id` was received in this turn, do not answer the campaign question and do not claim that a report was created or selected.
+
+The report is the answer. Do not duplicate its findings, metrics, tables, interpretation, recommendations, or summary into chat. After `campaign_reports_get_state` proves the new report is ready and selected, the entire final chat reply must be exactly: **“Your report is ready in Cosmise Campaigns.”**
+
 ## Required entry sequence
 
-1. Confirm that the user attached or named the installed `cosmise-campaigns` app.
-2. Call SYM-Node `get_app_agent_context` with `app_id="cosmise-campaigns"`.
+1. Treat the Campaigns subchat, an attached app reference, the app name, or any follow-up to an earlier Campaigns question as sufficient routing context.
+2. Call `symposium_context.get_app_agent_context` with `app_id="cosmise-campaigns"`.
 3. Read the returned bootstrap, instructions, and exact local tool schemas.
-4. Invoke operations through SYM-Node `call_app_tool`; never guess the app's dynamic port or call its public URL as an Agent API.
+4. Invoke operations through `symposium_context.call_app_tool`; never guess the app's dynamic port, use direct provider tools, or call its public URL as an Agent API.
 5. Call `campaign_reports_get_bootstrap` and `campaign_reports_get_state`.
 6. Require `runtime.backend_mcp_configured=true` and `connection.state="ready"`.
 7. Start a report only after the question has enough scope to answer honestly.
@@ -97,6 +109,9 @@ Before replying, verify that:
 - validation succeeded;
 - status is `ready` or safely `failed`;
 - the rendered report answers the original question rather than a generic template.
+- the current turn contains wrapper receipts for `campaign_reports_start`, the required reads, `campaign_reports_complete`, and `campaign_reports_set_view`.
+
+If any receipt is missing, continue the app workflow or report the failure honestly. Never substitute a chat-only answer.
 
 If the user says nothing is happening or the report is not being viewed, tell them exactly:
 
