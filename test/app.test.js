@@ -80,6 +80,8 @@ test('repository owns a profile-scoped Campaign Reports skill and detailed Agent
   assert.equal(manifest.agent.message_acceptance.tool_name, 'campaign_reports_start');
   assert.equal(manifest.agent.message_acceptance.arguments.request_id, 'message.id');
   assert.equal(manifest.agent.message_acceptance.receipt_id_path, 'report.id');
+  assert.equal(manifest.agent.message_acceptance.heartbeat_tool_name, 'campaign_reports_heartbeat');
+  assert.equal(manifest.agent.message_acceptance.heartbeat_interval_seconds, 15);
   assert.match(skill, /Ask one compact clarification/);
   assert.match(skill, /never present total credit as deduplicated revenue/);
   assert.match(agents, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed/);
