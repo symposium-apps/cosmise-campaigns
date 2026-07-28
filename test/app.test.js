@@ -61,14 +61,14 @@ test('repository owns a profile-scoped Campaign Reports skill and detailed Agent
   const skill = fs.readFileSync(path.join(root, 'skills', skillName, 'SKILL.md'), 'utf8');
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   const profileRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'campaign-skill-profile-'));
-  const legacySkill = path.join(profileRoot, 'skills', 'cosmise-campaign-reports');
+  const legacySkill = path.join(profileRoot, 'skills', 'analytics', 'cosmise-campaign-reports');
   fs.mkdirSync(legacySkill, { recursive: true });
   fs.writeFileSync(path.join(legacySkill, 'SKILL.md'), 'legacy direct-provider skill');
   const installed = spawnSync(process.execPath, ['scripts/install-hermes-skill.js'], { cwd: root, env: { ...process.env, HERMES_HOME: profileRoot }, encoding: 'utf8' });
   assert.equal(installed.status, 0, installed.stderr);
   assert(fs.existsSync(path.join(profileRoot, 'skills', skillName, 'SKILL.md')));
   assert.equal(fs.existsSync(legacySkill), false, 'legacy direct-provider skill must be removed');
-  assert.match(installed.stdout, /removed_legacy_skill=cosmise-campaign-reports/);
+  assert.match(installed.stdout, /removed_legacy_skill=analytics\/cosmise-campaign-reports/);
   assert.match(skill, /symposium_context\.get_app_agent_context/);
   assert.match(skill, /Prior chat results, an older completed report, cached data, or direct provider tools never satisfy this gate/);
   assert.match(skill, /Ask one compact clarification/);
