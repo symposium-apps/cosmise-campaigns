@@ -195,6 +195,10 @@ test('older Agent work cannot steal the selected view from a newer accepted mess
 
   await mcp.call('campaign_reports_read_context', { report_id: newer.report.id });
   assert.equal(store.snapshot().view.active_report_id, newer.report.id);
+  const heartbeat = await mcp.call('campaign_reports_heartbeat', { report_id: newer.report.id });
+  assert.equal(heartbeat.active, true);
+  assert.equal(heartbeat.activity.title, 'Working now');
+  assert.equal(store.snapshot().activities[0].call_id, `agent-heartbeat:${newer.report.id}`);
 });
 
 test('HTTP app supports question intake and browser-safe report rendering', async (t) => {

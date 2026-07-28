@@ -35,7 +35,9 @@
         "question": "message.text",
         "request_id": "message.id"
       },
-      "receipt_id_path": "report.id"
+      "receipt_id_path": "report.id",
+      "heartbeat_tool_name": "campaign_reports_heartbeat",
+      "heartbeat_interval_seconds": 15
     }
   },
   "permissions": [{ "id": "network.external", "reason": "Call the read-only Cosmise Campaigns API from the trusted backend." }],
