@@ -1,7 +1,7 @@
 ---
 name: using-cosmise-campaign-reports
 description: Use for every campaign question in a Cosmise Campaigns conversation. App-first execution is mandatory.
-version: 1.2.0
+version: 1.3.0
 author: Cosmise Campaigns
 license: Proprietary
 metadata:
@@ -25,21 +25,33 @@ For **every** campaign-analysis request in a Cosmise Campaigns conversation, inc
 2. Call `symposium_context.call_app_tool` → `campaign_reports_start` **before reading campaign data or drafting an answer**.
 3. Perform every read, write, validation, completion, and view-selection operation with `symposium_context.call_app_tool`.
 
+### Immediate-start rule
+
+After this skill is loaded, the next two tool calls must be:
+
+1. `symposium_context.get_app_agent_context(app_id="cosmise-campaigns")`;
+2. a separate `symposium_context.call_app_tool` call for `campaign_reports_start`.
+
+`campaign_reports_start` must be a small standalone tool call. Do not place it inside `execute_code`, a terminal script, a batch containing campaign reads, or a long generated program. Do not inspect data, draft analysis, build report Markdown, load another skill, or perform extended reasoning before the start receipt is returned. Starting the report first is what makes the Campaigns app show immediate feedback while the remaining work is planned.
+
 Prior chat results, an older completed report, cached data, or direct provider tools never satisfy this gate. If no new `campaign_reports_start` result containing a `report.id` was received in this turn, do not answer the campaign question and do not claim that a report was created or selected.
 
-The report is the answer. Do not duplicate its findings, metrics, tables, interpretation, recommendations, or summary into chat. After `campaign_reports_get_state` proves the new report is ready and selected, return only the unique title-bearing `reply_exactly` value supplied by `campaign_reports_set_view`, for example: **“Your report “Attribution rank changes” is ready in Cosmise Campaigns.”**
+The report is the answer. Do not duplicate its findings, metrics, tables, interpretation, recommendations, or summary into chat. After `campaign_reports_get_state` proves the new report is ready and selected, return only the unique title-bearing `reply_exactly` value supplied by `campaign_reports_set_view`, for example: **Your report “Attribution rank changes” is ready in Cosmise Campaigns.**
 
 ## Required entry sequence
 
 1. Treat the Campaigns subchat, an attached app reference, the app name, or any follow-up to an earlier Campaigns question as sufficient routing context.
 2. Call `symposium_context.get_app_agent_context` with `app_id="cosmise-campaigns"`.
 3. Read the returned bootstrap, instructions, and exact local tool schemas.
-4. Invoke operations through `symposium_context.call_app_tool`; never guess the app's dynamic port, use direct provider tools, or call its public URL as an Agent API.
-5. Call `campaign_reports_get_bootstrap` and `campaign_reports_get_state`.
-6. Require `runtime.backend_mcp_configured=true` and `connection.state="ready"`.
-7. Start a report only after the question has enough scope to answer honestly.
+4. Immediately invoke `campaign_reports_start` through `symposium_context.call_app_tool` as a standalone call using the user's question and a concise provisional title.
+5. Keep the returned `report.id`. Every subsequent read and report operation must include it.
+6. Call `campaign_reports_get_bootstrap` and `campaign_reports_get_state`.
+7. Require `runtime.backend_mcp_configured=true` and `connection.state="ready"`; if unavailable, safely fail the visible report and give recovery guidance.
+8. Clarification may refine the report afterward; it must not delay visible initialization.
 
-## Clarify before starting
+Never guess the app's dynamic port, use direct provider tools, or call its public URL as an Agent API.
+
+## Clarify after visible initialization
 
 Resolve these when they materially affect the answer:
 
@@ -51,12 +63,11 @@ Resolve these when they materially affect the answer:
 
 Do not silently convert an ambiguous question into a previous-month, all-platform, six-model report. Ask one compact clarification when essential. If the user asks for best judgment, state the chosen assumptions in the report.
 
-## Agent-driven report loop
+## Continue the initialized report
 
-1. `campaign_reports_start` with the exact question and a concise customer-facing title.
-2. `campaign_reports_read_context`; verify the credential-resolved organisation.
-3. `campaign_reports_read_capabilities`; use only supported models and reads.
-4. Select only operations required by the question:
+1. `campaign_reports_read_context`; verify the credential-resolved organisation.
+2. `campaign_reports_read_capabilities`; use only supported models and reads.
+3. Select only operations required by the question:
    - `campaign_reports_read_performance` for hierarchy, spend, revenue, orders, ROAS, and CPA;
    - `campaign_reports_compare_attribution` for bounded model sensitivity;
    - `campaign_reports_read_trend` for movement or period shape;
@@ -64,12 +75,12 @@ Do not silently convert an ambiguous question into a previous-month, all-platfor
    - `campaign_reports_read_diagnostics` for identity and revenue-quality concerns;
    - `campaign_reports_read_evidence` for bounded support behind a finding;
    - `campaign_reports_read_journey` only for one specified authorized order journey.
-5. `campaign_reports_save_markdown` with the current revision.
-6. `campaign_reports_validate`; repair every validation error.
-7. `campaign_reports_complete` with the latest revision.
-8. `campaign_reports_set_view` with the completed report ID.
-9. `campaign_reports_get_state`; require the report to be ready and selected.
-10. Share only after an explicit user request with `confirm=true`.
+4. `campaign_reports_save_markdown` with the current revision.
+5. `campaign_reports_validate`; repair every validation error.
+6. `campaign_reports_complete` with the latest revision.
+7. `campaign_reports_set_view` with the completed report ID.
+8. `campaign_reports_get_state`; require the report to be ready and selected.
+9. Share only after an explicit user request with `confirm=true`.
 
 On failure, call `campaign_reports_fail` with a safe explanation and current revision. Never leave a report appearing to run after work has stopped.
 

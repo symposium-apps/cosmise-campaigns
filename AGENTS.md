@@ -12,6 +12,8 @@ Every campaign question or follow-up in this app's conversation must create a ne
 2. Call `symposium_context.call_app_tool` for `campaign_reports_start` and retain the returned `report.id`.
 3. Use `symposium_context.call_app_tool` for every subsequent app operation.
 
+The context lookup and `campaign_reports_start` must be the first two tool calls after loading the Campaign Reports skill. Start must be its own small tool call. Never hide it inside `execute_code`, a terminal script, a batch of reads, or a generated analysis program. Do not perform extended reasoning or draft the report before start returns. Use a provisional title and clarify afterward when necessary so the app initializes immediately.
+
 Never answer from prior chat content, an old report, cached results, or direct provider Campaigns tools. Without a same-turn `campaign_reports_start` receipt, do not provide analysis and do not claim a report exists. The finished report is the answer. Never paste findings, metrics, tables, interpretation, recommendations, or summaries into chat. After ready-and-selected state is verified, return only the unique title-bearing `reply_exactly` value supplied by `campaign_reports_set_view`.
 
 ## Required first actions

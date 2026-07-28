@@ -71,6 +71,10 @@ test('repository owns a profile-scoped Campaign Reports skill and detailed Agent
   assert.match(installed.stdout, /removed_legacy_skill=analytics\/cosmise-campaign-reports/);
   assert.match(skill, /symposium_context\.get_app_agent_context/);
   assert.match(skill, /Prior chat results, an older completed report, cached data, or direct provider tools never satisfy this gate/);
+  assert.match(skill, /must be a small standalone tool call/);
+  assert.match(skill, /Do not place it inside `execute_code`/);
+  assert.match(skill, /clarification may refine the report afterward; it must not delay visible initialization/i);
+  assert.match(BOOTSTRAP.required_start.join(' '), /Immediately make campaign_reports_start the next, separate tool call/);
   assert.match(skill, /Ask one compact clarification/);
   assert.match(skill, /never present total credit as deduplicated revenue/);
   assert.match(agents, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed/);
