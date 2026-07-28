@@ -102,6 +102,19 @@ test('safe activity detail exposes workflow scope without production envelopes',
   assert.doesNotMatch(detail, /authorization|bearer|campaigns_query_table/i);
 });
 
+test('wrapper operations immediately advance visible Agent workflow state', () => {
+  const store = temporaryStore();
+  const report = store.createReport({ question: 'Compare attribution models.' });
+  assert.equal(report.workflow.mode, 'agent');
+  assert.equal(report.workflow.current_stage, 'scope');
+  store.upsertActivity({ call_id: 'performance-running', report_id: report.id, operation: 'performance', status: 'running', title: 'Reviewing campaign performance', detail: 'safe bounded read' });
+  const current = store.report(report.id, false);
+  assert.equal(current.workflow.status, 'running');
+  assert.equal(current.workflow.current_stage, 'analysis');
+  assert.equal(current.workflow.stages.find((stage) => stage.id === 'analysis').status, 'running');
+  assert.equal(current.workflow.summary, 'Reviewing campaign performance');
+});
+
 test('Markdown charts render and unsafe markup is removed', () => {
   const markdown = '# Result\n\n## Scope\n\nApril.\n\n| A | B |\n|---|---|\n|x|1|\n\n```campaign-chart\n{"type":"bar","title":"ROAS","labels":["A"],"values":[1.2]}\n```\n\n## Method and limitations\n\nSnapshot.\n\n<script>alert(1)</script>';
   const html = renderMarkdown(markdown);
