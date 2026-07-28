@@ -76,7 +76,7 @@ test('repository owns a profile-scoped Campaign Reports skill and detailed Agent
   assert.match(agents, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed/);
   assert.equal(BOOTSTRAP.skill_setup.name, skillName);
   assert.match(BOOTSTRAP.product_model.analyst, /active Symposium Agent/);
-  assert.equal(BOOTSTRAP.chat_output_contract.required_final_reply, 'Your report is ready in Cosmise Campaigns.');
+  assert.equal(BOOTSTRAP.chat_output_contract.required_final_reply_template, 'Your report “<report title>” is ready in Cosmise Campaigns.');
   assert.equal(BOOTSTRAP.chat_output_contract.duplicate_analysis_in_chat, false);
   assert(BOOTSTRAP.report_rules.length >= 8);
 });
@@ -144,9 +144,9 @@ test('report lifecycle is revision-protected and validates before completion', a
   assert.equal(store.report(id, false).workflow.current_stage, 'review');
   const completed = await mcp.call('campaign_reports_complete', { report_id: id, expected_revision: checked.report.revision });
   assert.equal(completed.report.status, 'ready');
-  assert.equal(completed.chat_handoff.after_select_and_verify_reply_exactly, 'Your report is ready in Cosmise Campaigns.');
+  assert.equal(completed.chat_handoff.after_select_and_verify_reply_exactly, 'Your report “Performance review” is ready in Cosmise Campaigns.');
   const selected = await mcp.call('campaign_reports_set_view', { report_id: id });
-  assert.equal(selected.chat_handoff.reply_exactly, 'Your report is ready in Cosmise Campaigns.');
+  assert.equal(selected.chat_handoff.reply_exactly, 'Your report “Performance review” is ready in Cosmise Campaigns.');
   const finalState = await mcp.call('campaign_reports_get_state');
   assert.equal(finalState.view.active_report_id, id);
   assert.equal(finalState.reports.find((report) => report.id === id).workflow.status, 'ready');
@@ -173,7 +173,7 @@ test('HTTP app supports question intake and browser-safe report rendering', asyn
   assert.equal(health.production_mode, 'read');
   const agentInstructions = await fetch(`${base}/api/agent/instructions`).then((response) => response.json());
   assert.match(agentInstructions.instructions, /Dock-to-Agent request as tailored analysis/);
-  assert.match(agentInstructions.instructions, /entire final chat reply must be exactly: Your report is ready in Cosmise Campaigns/);
+  assert.match(agentInstructions.instructions, /title-bearing reply_exactly value supplied by campaign_reports_set_view/);
   assert.equal(agentInstructions.mcp, '/mcp');
   const publicMutation = await fetch(`${base}/api/reports`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.10' }, body: JSON.stringify({ question: 'This must not run from the public app.' }) });
   assert.equal(publicMutation.status, 403, 'the public iframe must not start credential-backed analysis');
@@ -188,7 +188,7 @@ test('HTTP app supports question intake and browser-safe report rendering', asyn
   const listed = await rpc(base, 'tools/list');
   assert(listed.result.tools.every((tool) => tool.name.startsWith('campaign_reports_')));
   const initialized = await rpc(base, 'initialize');
-  assert.match(initialized.result.instructions, /reply exactly: Your report is ready in Cosmise Campaigns/);
+  assert.match(initialized.result.instructions, /unique title-bearing handoff supplied by campaign_reports_set_view/);
   assert.match(initialized.result.instructions, /app receives realtime state/);
 });
 

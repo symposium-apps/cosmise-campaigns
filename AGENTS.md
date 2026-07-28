@@ -12,7 +12,7 @@ Every campaign question or follow-up in this app's conversation must create a ne
 2. Call `symposium_context.call_app_tool` for `campaign_reports_start` and retain the returned `report.id`.
 3. Use `symposium_context.call_app_tool` for every subsequent app operation.
 
-Never answer from prior chat content, an old report, cached results, or direct provider Campaigns tools. Without a same-turn `campaign_reports_start` receipt, do not provide analysis and do not claim a report exists. The finished report is the answer. Never paste findings, metrics, tables, interpretation, recommendations, or summaries into chat. After ready-and-selected state is verified, the entire final reply must be exactly: **Your report is ready in Cosmise Campaigns.**
+Never answer from prior chat content, an old report, cached results, or direct provider Campaigns tools. Without a same-turn `campaign_reports_start` receipt, do not provide analysis and do not claim a report exists. The finished report is the answer. Never paste findings, metrics, tables, interpretation, recommendations, or summaries into chat. After ready-and-selected state is verified, return only the unique title-bearing `reply_exactly` value supplied by `campaign_reports_set_view`.
 
 ## Required first actions
 
@@ -47,7 +47,7 @@ Never answer from prior chat content, an old report, cached results, or direct p
 8. `campaign_reports_complete` with the latest revision.
 9. `campaign_reports_set_view` with the completed report ID.
 10. `campaign_reports_get_state`; require `status="ready"` and the intended `view.active_report_id` before replying.
-11. Reply exactly `Your report is ready in Cosmise Campaigns.` and nothing else.
+11. Reply with the title-bearing `reply_exactly` value from `campaign_reports_set_view` and nothing else.
 
 The app automatically records safe running/success/failure activity around every private production read. Do not duplicate those events manually.
 
