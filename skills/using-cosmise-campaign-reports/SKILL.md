@@ -42,7 +42,7 @@ Fallback when there is no prestart receipt:
 
 Prior chat results, an older completed report, cached data, or direct provider tools never satisfy this gate. If no new `campaign_reports_start` result containing a `report.id` was received in this turn, do not answer the campaign question and do not claim that a report was created or selected.
 
-The report is the answer. Do not duplicate its findings, metrics, tables, interpretation, recommendations, or summary into chat. After `campaign_reports_get_state` proves the new report is ready and selected, return only the unique title-bearing `reply_exactly` value supplied by `campaign_reports_set_view`, for example: **Your report “Attribution rank changes” is ready in Cosmise Campaigns.**
+The report is the answer. Do not duplicate its findings, metrics, tables, interpretation, recommendations, or summary into chat. After `campaign_reports_get_state` proves the new report is ready and selected, return only the exact `reply_exactly` value supplied by `campaign_reports_set_view`: **Your report is ready in Cosmise Campaigns.**
 
 ## Required entry sequence
 

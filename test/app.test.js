@@ -87,7 +87,7 @@ test('repository owns a profile-scoped Campaign Reports skill and detailed Agent
   assert.match(agents, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed/);
   assert.equal(BOOTSTRAP.skill_setup.name, skillName);
   assert.match(BOOTSTRAP.product_model.analyst, /active Symposium Agent/);
-  assert.equal(BOOTSTRAP.chat_output_contract.required_final_reply_template, 'Your report “<report title>” is ready in Cosmise Campaigns.');
+  assert.equal(BOOTSTRAP.chat_output_contract.required_final_reply_template, 'Your report is ready in Cosmise Campaigns.');
   assert.equal(BOOTSTRAP.chat_output_contract.duplicate_analysis_in_chat, false);
   assert(BOOTSTRAP.report_rules.length >= 8);
 });
@@ -155,9 +155,9 @@ test('report lifecycle is revision-protected and validates before completion', a
   assert.equal(store.report(id, false).workflow.current_stage, 'review');
   const completed = await mcp.call('campaign_reports_complete', { report_id: id, expected_revision: checked.report.revision });
   assert.equal(completed.report.status, 'ready');
-  assert.equal(completed.chat_handoff.after_select_and_verify_reply_exactly, 'Your report “Performance review” is ready in Cosmise Campaigns.');
+  assert.equal(completed.chat_handoff.after_select_and_verify_reply_exactly, 'Your report is ready in Cosmise Campaigns.');
   const selected = await mcp.call('campaign_reports_set_view', { report_id: id });
-  assert.equal(selected.chat_handoff.reply_exactly, 'Your report “Performance review” is ready in Cosmise Campaigns.');
+  assert.equal(selected.chat_handoff.reply_exactly, 'Your report is ready in Cosmise Campaigns.');
   const finalState = await mcp.call('campaign_reports_get_state');
   assert.equal(finalState.view.active_report_id, id);
   assert.equal(finalState.reports.find((report) => report.id === id).workflow.status, 'ready');
