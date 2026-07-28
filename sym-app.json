@@ -27,7 +27,16 @@
     "instructions_path": "AGENTS.md",
     "bootstrap_path": "/api/agent/bootstrap",
     "mcp_path": "/mcp",
-    "activity_state_path": "/api/state"
+    "activity_state_path": "/api/state",
+    "message_acceptance": {
+      "enabled": true,
+      "tool_name": "campaign_reports_start",
+      "arguments": {
+        "question": "message.text",
+        "request_id": "message.id"
+      },
+      "receipt_id_path": "report.id"
+    }
   },
   "permissions": [{ "id": "network.external", "reason": "Call the read-only Cosmise Campaigns API from the trusted backend." }],
   "data": {

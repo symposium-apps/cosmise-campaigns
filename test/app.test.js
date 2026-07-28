@@ -57,6 +57,7 @@ test('local MCP exposes only app-owned report operations', () => {
 
 test('repository owns a profile-scoped Campaign Reports skill and detailed Agent bootstrap', () => {
   const root = path.join(__dirname, '..');
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'sym-app.json'), 'utf8'));
   const skillName = 'using-cosmise-campaign-reports';
   const skill = fs.readFileSync(path.join(root, 'skills', skillName, 'SKILL.md'), 'utf8');
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
@@ -75,6 +76,10 @@ test('repository owns a profile-scoped Campaign Reports skill and detailed Agent
   assert.match(skill, /Do not place it inside `execute_code`/);
   assert.match(skill, /clarification may refine the report afterward; it must not delay visible initialization/i);
   assert.match(BOOTSTRAP.required_start.join(' '), /Immediately make campaign_reports_start the next, separate tool call/);
+  assert.match(skill, /SYM_APP_PRESTART_V1/);
+  assert.equal(manifest.agent.message_acceptance.tool_name, 'campaign_reports_start');
+  assert.equal(manifest.agent.message_acceptance.arguments.request_id, 'message.id');
+  assert.equal(manifest.agent.message_acceptance.receipt_id_path, 'report.id');
   assert.match(skill, /Ask one compact clarification/);
   assert.match(skill, /never present total credit as deduplicated revenue/);
   assert.match(agents, /Drag the Cosmise Campaigns app from the Dock to the Agent to ask for help if nothing is happening or the report is not being viewed/);
@@ -158,6 +163,17 @@ test('report lifecycle is revision-protected and validates before completion', a
   assert(saved.report.markdown.includes('Performance review'));
   const phases = store.snapshot().activities.filter((item) => item.report_id === id).map((item) => `${item.operation}:${item.status}`);
   for (const expected of ['report_prepare:success','report_analysis:success','report_write:success','report_validate:success','report_complete:success']) assert(phases.includes(expected), `missing ${expected}`);
+});
+
+test('message acceptance start is idempotent by Symposium message id', async () => {
+  const store = temporaryStore();
+  const mcp = createMcp({ store, client: fakeClient(store), baseUrl: 'http://127.0.0.1' });
+  const input = { question: 'Which campaigns changed?', request_id: 'msg_acceptance_123' };
+  const first = await mcp.call('campaign_reports_start', input);
+  const replay = await mcp.call('campaign_reports_start', input);
+  assert.equal(replay.idempotent_replay, true);
+  assert.equal(replay.report.id, first.report.id);
+  assert.equal(store.snapshot().reports.filter((report) => report.request_id === input.request_id).length, 1);
 });
 
 test('HTTP app supports question intake and browser-safe report rendering', async (t) => {

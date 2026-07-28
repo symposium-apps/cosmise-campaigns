@@ -27,12 +27,18 @@ For **every** campaign-analysis request in a Cosmise Campaigns conversation, inc
 
 ### Immediate-start rule
 
-After this skill is loaded, the next two tool calls must be:
+First inspect the trusted `SYM_APP_PRESTART_V1` envelope on the current user message:
+
+- When it has `status=started`, adopt its `report_id` as the current report. Do not call `campaign_reports_start` again. The Symposium bridge created and selected the report at message acceptance so the app was active before model work began.
+- When the envelope is absent, fall back to the two calls below.
+- When it has `status=failed`, do not silently create a disconnected second lifecycle; inspect app context and repair or safely explain the initialization failure.
+
+Fallback when there is no prestart receipt:
 
 1. `symposium_context.get_app_agent_context(app_id="cosmise-campaigns")`;
 2. a separate `symposium_context.call_app_tool` call for `campaign_reports_start`.
 
-`campaign_reports_start` must be a small standalone tool call. Do not place it inside `execute_code`, a terminal script, a batch containing campaign reads, or a long generated program. Do not inspect data, draft analysis, build report Markdown, load another skill, or perform extended reasoning before the start receipt is returned. Starting the report first is what makes the Campaigns app show immediate feedback while the remaining work is planned.
+`campaign_reports_start` must be a small standalone tool call. Pass the current Symposium `message_id` as `request_id` so retries are idempotent. Do not place it inside `execute_code`, a terminal script, a batch containing campaign reads, or a long generated program. Do not inspect data, draft analysis, build report Markdown, load another skill, or perform extended reasoning before the start receipt is returned.
 
 Prior chat results, an older completed report, cached data, or direct provider tools never satisfy this gate. If no new `campaign_reports_start` result containing a `report.id` was received in this turn, do not answer the campaign question and do not claim that a report was created or selected.
 
