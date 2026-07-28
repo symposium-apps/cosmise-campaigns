@@ -176,6 +176,27 @@ test('message acceptance start is idempotent by Symposium message id', async () 
   assert.equal(store.snapshot().reports.filter((report) => report.request_id === input.request_id).length, 1);
 });
 
+test('older Agent work cannot steal the selected view from a newer accepted message', async () => {
+  const store = temporaryStore();
+  const mcp = createMcp({ store, client: fakeClient(store), baseUrl: 'http://127.0.0.1' });
+  const older = await mcp.call('campaign_reports_start', { question: 'Older request', request_id: 'msg_older' });
+  store.rawReport(older.report.id).created_at = '2026-07-28T05:00:00.000Z';
+  const newer = await mcp.call('campaign_reports_start', { question: 'Newer request', request_id: 'msg_newer' });
+  store.rawReport(newer.report.id).created_at = '2026-07-28T05:01:00.000Z';
+
+  await mcp.call('campaign_reports_read_context', { report_id: older.report.id });
+  assert.equal(store.snapshot().view.active_report_id, newer.report.id);
+
+  store.updateReport(older.report.id, { status: 'ready' });
+  const staleSelection = await mcp.call('campaign_reports_set_view', { report_id: older.report.id });
+  assert.equal(staleSelection.selected, false);
+  assert.equal(staleSelection.view.active_report_id, newer.report.id);
+  assert.equal(staleSelection.chat_handoff, undefined);
+
+  await mcp.call('campaign_reports_read_context', { report_id: newer.report.id });
+  assert.equal(store.snapshot().view.active_report_id, newer.report.id);
+});
+
 test('HTTP app supports question intake and browser-safe report rendering', async (t) => {
   const store = temporaryStore();
   store.setConnection({ state: 'ready', mode: 'read', message: 'Test connection ready.' });
